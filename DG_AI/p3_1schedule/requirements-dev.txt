@@ -1,0 +1,2 @@
+# 개발용 도구 (py311 환경에 설치: python -m pip install -r requirements-dev.txt)
+black==26.10.1

@@ -1,0 +1,19 @@
+{
+  "name": "영단어 카드",
+  "short_name": "영단어 카드",
+  "description": "브라우저에서 바로 쓰는 1인용 영단어 플래시카드 웹앱",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#1e3a5f",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

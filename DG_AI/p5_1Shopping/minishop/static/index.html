@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 쇼핑몰</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #ffffff; --text: #1d2330; --muted: #6b7280;
+    --accent: #3b6ff5; --accent-text: #ffffff; --danger: #e5484d; --ok: #2f9e44;
+    --border: #e3e6ee; --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Malgun Gothic", sans-serif; }
+  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 16px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+  h3 { font-size: 16px; margin: 0 0 4px; }
+  nav { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  nav button { background: transparent; color: var(--muted); border: 1px solid transparent; }
+  nav button.active { color: var(--accent); border-color: var(--accent); background: #eef3ff; }
+  button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 8px 14px;
+           background: var(--accent); color: var(--accent-text); }
+  button:disabled { background: #b8c2d6; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--danger); padding: 4px 8px; }
+  button.secondary { background: #eef0f5; color: var(--text); }
+  input, select { font: inherit; padding: 8px 10px; border: 1px solid var(--border);
+                  border-radius: 8px; background: #fff; color: var(--text); }
+  main { padding: 20px 0 60px; }
+  section { display: block; }
+  section[hidden], [hidden] { display: none !important; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+          display: flex; flex-direction: column; gap: 8px; }
+  .card button { margin-top: auto; }
+  .price { font-weight: 700; font-size: 17px; margin: 0; }
+  .muted { color: var(--muted); font-size: 13px; margin: 0; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+         padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .row:last-child { border-bottom: 0; }
+  .right { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+  .total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 17px; }
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); background: #eef0f5; }
+  .badge { background: var(--danger); color: #fff; border-radius: 999px; font-size: 12px; padding: 1px 7px; margin-left: 4px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120px);
+           background: var(--text); color: #fff; padding: 10px 18px; border-radius: 10px; transition: transform .25s; max-width: calc(100% - 32px); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); }
+  ul { margin: 6px 0; padding-left: 20px; }
+  @media (max-width: 520px) { .row { flex-direction: column; align-items: flex-start; } .right { width: 100%; justify-content: space-between; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>미니 쇼핑몰</h1>
+      <div id="auth-info" class="form-row" hidden>
+        <span>안녕하세요, <strong id="user-name"></strong>님</span>
+        <button class="secondary" id="logout-btn">로그아웃</button>
+      </div>
+    </div>
+    <div id="login-box" class="form-row" style="margin-top:12px">
+      <form id="login-form" class="form-row">
+        <input id="login-name" placeholder="닉네임 (1~30자)" maxlength="30" required>
+        <button type="submit">시작하기</button>
+      </form>
+    </div>
+    <nav id="nav" hidden>
+      <button data-view="products" class="active">상품</button>
+      <button data-view="cart">장바구니<span id="cart-count" class="badge" hidden>0</span></button>
+      <button data-view="orders">주문내역</button>
+      <button data-view="profile">내 프로필</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section data-section="products">
+    <h2>상품 목록</h2>
+    <div id="product-list" class="grid"></div>
+  </section>
+
+  <section data-section="cart" hidden>
+    <h2>장바구니</h2>
+    <div class="panel">
+      <div id="cart-list"></div>
+      <div id="cart-footer" hidden>
+        <div class="total"><span>합계</span><strong id="cart-total">0원</strong></div>
+        <div class="form-row" style="margin-top:14px; justify-content:flex-end">
+          <select id="payment-method">
+            <option value="card">신용카드 (시뮬레이션)</option>
+            <option value="bank_transfer">계좌이체 (시뮬레이션)</option>
+          </select>
+          <button id="order-btn">결제하고 주문하기</button>
+        </div>
+        <p class="muted" style="margin-top:8px">결제 시뮬레이션: 1,000,000원을 초과하면 한도 초과로 거절됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section data-section="orders" hidden>
+    <h2>주문 내역</h2>
+    <div id="order-list"></div>
+  </section>
+
+  <section data-section="profile" hidden>
+    <h2>내 프로필</h2>
+    <div class="panel" id="profile-box">
+      <div class="form-row" style="align-items:center; gap:20px">
+        <img id="avatar-img" class="avatar" alt="프로필 사진" hidden>
+        <div>
+          <h3 id="profile-name"></h3>
+          <p class="muted">JPG, PNG · 최대 5MB</p>
+        </div>
+      </div>
+      <form id="avatar-form" class="form-row" style="margin-top:16px">
+        <input id="avatar-file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" required>
+        <button type="submit">사진 업로드</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+(() => {
+  const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+  const $ = (sel) => document.querySelector(sel);
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g,
+    (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+  const won = (n) => Number(n).toLocaleString("ko-KR") + "원";
+
+  // 브라우저 저장소는 접근이 막힐 수 있으므로 예외를 무시한다.
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } },
+    del(k) { try { localStorage.removeItem(k); } catch (e) { /* 무시 */ } },
+  };
+
+  let token = store.get("minishop_token");
+  let me = null;
+
+  function toast(msg, ok = true) {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.className = ok ? "toast show" : "toast show error";
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { t.className = "toast"; }, 2800);
+  }
+
+  async function api(method, path, body) {
+    const headers = {};
+    if (token) headers["Authorization"] = "Bearer " + token;
+    let payload;
+    if (body instanceof FormData) {
+      payload = body;                       // Content-Type은 브라우저가 boundary와 함께 설정
+    } else if (body !== undefined) {
+      headers["Content-Type"] = "application/json";
+      payload = JSON.stringify(body);
+    }
+    const res = await fetch(path, { method, headers, body: payload });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401 && token) forgetSession();
+      throw new Error(data.error || `요청 실패 (${res.status})`);
+    }
+    return data;
+  }
+
+  function forgetSession() {
+    token = null;
+    me = null;
+    store.del("minishop_token");
+    renderAuth();
+  }
+
+  function renderAuth() {
+    const loggedIn = Boolean(me);
+    $("#login-box").hidden = loggedIn;
+    $("#auth-info").hidden = !loggedIn;
+    $("#nav").hidden = !loggedIn;
+    if (loggedIn) $("#user-name").textContent = me.name;
+    if (!loggedIn) $("#cart-count").hidden = true;
+  }
+
+  function setCartCount(items) {
+    const n = items.reduce((sum, i) => sum + i.quantity, 0);
+    const badge = $("#cart-count");
+    badge.textContent = n;
+    badge.hidden = n === 0;
+  }
+
+  function showView(name) {
+    document.querySelectorAll("nav [data-view]").forEach((b) =>
+      b.classList.toggle("active", b.dataset.view === name));
+    document.querySelectorAll("section[data-section]").forEach((s) =>
+      { s.hidden = s.dataset.section !== name; });
+    const loaders = { products: loadProducts, cart: loadCart, orders: loadOrders, profile: renderProfile };
+    loaders[name]().catch((e) => toast(e.message, false));
+  }
+
+  // ------------------------------------------------------------ 상품
+  async function loadProducts() {
+    const { products } = await api("GET", "/api/products");
+    $("#product-list").innerHTML = products.map((p) => `
+      <article class="card">
+        <h3>${esc(p.name)}</h3>
+        <p class="price">${won(p.price)}</p>
+        <p class="muted">재고 ${p.stock}개</p>
+        <button data-add="${p.id}" ${p.stock === 0 ? "disabled" : ""}>
+          ${p.stock === 0 ? "품절" : "장바구니 담기"}</button>
+      </article>`).join("");
+  }
+
+  $("#product-list").addEventListener("click", async (e) => {
+    const id = e.target.dataset.add;
+    if (!id) return;
+    if (!me) return toast("로그인 후 이용해주세요.", false);
+    try {
+      const cart = await api("POST", "/api/cart", { product_id: Number(id), quantity: 1 });
+      setCartCount(cart.items);
+      toast("장바구니에 담았습니다.");
+    } catch (err) {
+      toast(err.message, false);
+    }
+  });
+
+  // ------------------------------------------------------------ 장바구니
+  async function loadCart() {
+    if (!me) {
+      $("#cart-list").innerHTML = '<p class="muted">로그인이 필요합니다.</p>';
+      $("#cart-footer").hidden = true;
+      return;
+    }
+    const cart = await api("GET", "/api/cart");
+    setCartCount(cart.items);
+    $("#cart-list").innerHTML = cart.items.length
+      ? cart.items.map((i) => `
+        <div class="row">
+          <div><strong>${esc(i.name)}</strong><div class="muted">${won(i.price)} × ${i.quantity}</div></div>
+          <div class="right"><span>${won(i.subtotal)}</span>
+            <button class="ghost" data-remove="${i.product_id}">삭제</button></div>
+        </div>`).join("")
+      : '<p class="muted">장바구니가 비어 있습니다.</p>';
+    $("#cart-total").textContent = won(cart.total);
+    $("#cart-footer").hidden = cart.items.length === 0;
+  }
+
+  $("#cart-list").addEventListener("click", async (e) => {
+    const id = e.target.dataset.remove;
+    if (!id) return;
+    try {
+      await api("DELETE", `/api/cart/${id}`);
+      await loadCart();
+    } catch (err) {
+      toast(err.message, false);
+    }
+  });
+
+  $("#order-btn").addEventListener("click", async () => {
+    const btn = $("#order-btn");
+    btn.disabled = true;
+    try {
+      const order = await api("POST", "/api/orders", { payment_method: $("#payment-method").value });
+      toast(`주문 완료! 주문번호 #${order.id} · 결제 ${won(order.total)}`);
+      await loadCart();
+    } catch (err) {
+      toast(err.message, false);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ------------------------------------------------------------ 주문 내역
+  async function loadOrders() {
+    if (!me) {
+      $("#order-list").innerHTML = '<p class="muted">로그인이 필요합니다.</p>';
+      return;
+    }
+    const { orders } = await api("GET", "/api/orders");
+    $("#order-list").innerHTML = orders.length
+      ? orders.slice().reverse().map((o) => `
+        <article class="panel">
+          <h3>주문 #${o.id} · ${won(o.total)}</h3>
+          <p class="muted">${esc(new Date(o.created_at).toLocaleString("ko-KR"))} ·
+            ${esc(o.payment.method)} · 거래번호 ${esc(o.payment.transaction_id.slice(0, 8))}…</p>
+          <ul>${o.items.map((i) => `<li>${esc(i.name)} × ${i.quantity}</li>`).join("")}</ul>
+        </article>`).join("")
+      : '<p class="muted">주문 내역이 없습니다.</p>';
+  }
+
+  // ------------------------------------------------------------ 프로필
+  function renderProfile() {
+    if (!me) {
+      $("#profile-box").innerHTML = '<p class="muted">로그인이 필요합니다.</p>';
+      return Promise.resolve();
+    }
+    $("#profile-name").textContent = me.name;
+    const img = $("#avatar-img");
+    img.hidden = !me.avatar_url;
+    if (me.avatar_url) img.src = me.avatar_url + "?v=" + Date.now();
+    return Promise.resolve();
+  }
+
+  $("#avatar-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = $("#avatar-file").files[0];
+    if (!file) return toast("파일을 선택해주세요.", false);
+    if (file.size > MAX_AVATAR_BYTES) return toast("5MB 이하 파일만 업로드할 수 있습니다.", false);
+    const form = new FormData();
+    form.append("file", file, file.name);
+    try {
+      me = await api("POST", `/api/users/${me.id}/avatar`, form);
+      renderProfile();
+      toast("프로필 사진이 변경되었습니다.");
+    } catch (err) {
+      toast(err.message, false);
+    }
+  });
+
+  // ------------------------------------------------------------ 로그인 / 로그아웃
+  $("#login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const user = await api("POST", "/api/users", { name: $("#login-name").value });
+      token = user.token;
+      store.set("minishop_token", token);
+      me = await api("GET", "/api/me");
+      $("#login-name").value = "";
+      renderAuth();
+      showView("products");
+      toast(`${user.name}님, 환영합니다!`);
+    } catch (err) {
+      toast(err.message, false);
+    }
+  });
+
+  $("#logout-btn").addEventListener("click", () => {
+    forgetSession();
+    showView("products");
+  });
+
+  document.querySelector("nav").addEventListener("click", (e) => {
+    const view = e.target.closest("[data-view]")?.dataset.view;
+    if (view) showView(view);
+  });
+
+  // ------------------------------------------------------------ 초기화
+  (async () => {
+    if (token) {
+      try { me = await api("GET", "/api/me"); } catch (e) { forgetSession(); }
+    }
+    renderAuth();
+    showView("products");
+    if (me) {
+      try { setCartCount((await api("GET", "/api/cart")).items); } catch (e) { /* 무시 */ }
+    }
+  })();
+})();
+</script>
+</body>
+</html>

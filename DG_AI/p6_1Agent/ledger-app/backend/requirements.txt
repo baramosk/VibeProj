@@ -1,0 +1,15 @@
+# 런타임 의존성 (설치된 버전으로 고정, 2026-11-06 기준 설치 확인)
+fastapi==0.162.0
+uvicorn==0.54.0
+sqlalchemy==2.1.8
+pydantic==2.14.3
+pydantic-settings==2.16.2
+argon2-cffi==25.1.0
+alembic==1.20.1
+# Windows에는 시스템 시간대 DB가 없어 zoneinfo의 Asia/Seoul 로딩에 필요 (NFR-24)
+tzdata==2026.6
+
+# 테스트와 린트 (개발용)
+pytest==9.2.0
+httpx==0.28.1
+ruff==0.17.4

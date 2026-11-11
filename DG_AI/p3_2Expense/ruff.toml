@@ -1,0 +1,7 @@
+# 린터(ruff) 설정. 실행: python -m ruff check .
+target-version = "py311"
+line-length = 100
+
+[lint]
+# E/W: pycodestyle, F: pyflakes(미사용 변수·import 등), I: import 정렬, B: 흔한 실수, UP: 최신 문법
+select = ["E", "W", "F", "I", "B", "UP"]

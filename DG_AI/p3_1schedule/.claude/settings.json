@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"C:/Users/great/anaconda3/envs/py311/python.exe\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/format_py.py\" 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "black 정렬 중..."
+          }
+        ]
+      }
+    ]
+  }
+}

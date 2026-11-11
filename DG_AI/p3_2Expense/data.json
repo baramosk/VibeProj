@@ -1,0 +1,18 @@
+{
+  "transactions": [
+    {
+      "kind": "income",
+      "date": "2026-10-31",
+      "amount": 5000,
+      "category": "제품1 판매",
+      "memo": ""
+    },
+    {
+      "kind": "expense",
+      "date": "2026-11-02",
+      "amount": 3000,
+      "category": "고정비",
+      "memo": ""
+    }
+  ]
+}

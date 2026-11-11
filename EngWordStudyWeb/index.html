@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영단어 카드</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1e3a5f">
+</head>
+<body>
+
+<p id="app-banner" class="banner" role="status" hidden></p>
+
+<section id="study-screen" class="screen">
+  <header class="app-header">
+    <h1 class="app-title">영단어 카드</h1>
+    <button id="manage-btn" type="button" class="btn btn-secondary">단어 관리</button>
+  </header>
+
+  <main id="study-content" class="study-content">
+    <div id="progress-section" class="progress-section" hidden>
+      <div class="progress-row">
+        <span id="progress-text" class="progress-text" aria-live="polite">완료 0 / 전체 0</span>
+        <div class="filter-toggle" role="group" aria-label="학습 범위">
+          <button id="filter-all-btn" type="button" class="filter-btn" aria-pressed="false">전체</button>
+          <button id="filter-unmemorized-btn" type="button" class="filter-btn" aria-pressed="false">미완료만</button>
+        </div>
+      </div>
+      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+      </div>
+      <div class="order-row">
+        <button id="shuffle-btn" type="button" class="btn btn-small btn-secondary">섞기</button>
+        <button id="clear-order-btn" type="button" class="btn btn-small btn-secondary">순서 해제</button>
+      </div>
+    </div>
+
+    <div id="empty-state" class="empty-state" hidden>
+      <p>외울 단어를 추가해 보세요</p>
+      <button id="empty-add-btn" type="button" class="btn btn-primary">단어 추가</button>
+    </div>
+
+    <div id="all-done-state" class="empty-state" hidden>
+      <p>모든 단어를 외웠어요!</p>
+      <button id="show-all-btn" type="button" class="btn btn-primary">전체 다시 보기</button>
+      <button id="reset-memorized-btn-alldone" type="button" class="btn btn-secondary">완료 초기화</button>
+    </div>
+
+    <div id="card-area" class="card-area">
+      <button id="flash-card" type="button" class="flash-card" aria-pressed="false">
+        <span id="badge-done" class="badge-done" hidden>완료</span>
+        <span class="card-inner">
+          <span class="card-face card-front">
+            <span class="term"></span>
+          </span>
+          <span class="card-face card-back">
+            <span class="meaning"></span>
+            <span class="term-small"></span>
+          </span>
+        </span>
+      </button>
+
+      <p id="sr-announce" class="sr-only" aria-live="polite"></p>
+      <p id="position-indicator" class="position-indicator"></p>
+      <p id="loop-toast" class="loop-toast" hidden>한 바퀴를 다 봤어요</p>
+    </div>
+
+    <p id="shortcut-hint" class="shortcut-hint">Space 뒤집기 · ← 이전 · → 다음 · M 완료</p>
+  </main>
+
+  <footer class="controls">
+    <button id="toggle-memorized-btn" type="button" class="btn btn-toggle" aria-pressed="false">암기 완료</button>
+    <button id="prev-btn" type="button" class="btn btn-prev">이전</button>
+    <button id="next-btn" type="button" class="btn btn-primary btn-large">다음</button>
+  </footer>
+</section>
+
+<section id="manage-screen" class="screen" hidden>
+  <header class="app-header">
+    <button id="back-btn" type="button" class="btn btn-secondary">학습으로 돌아가기</button>
+  </header>
+
+  <main class="manage-content">
+    <form id="add-form" class="add-form" novalidate>
+      <div class="field">
+        <label for="term-input">영단어</label>
+        <input id="term-input" type="text" maxlength="100" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="meaning-input">뜻</label>
+        <input id="meaning-input" type="text" maxlength="200" autocomplete="off" required>
+      </div>
+      <button id="add-btn" type="submit" class="btn btn-primary" disabled>추가</button>
+      <p id="form-hint" class="hint" role="alert" hidden>영단어와 뜻을 모두 입력해 주세요</p>
+    </form>
+
+    <section class="bulk-section" aria-labelledby="bulk-heading">
+      <h2 id="bulk-heading" class="section-heading">여러 단어 한 번에 추가</h2>
+      <p class="section-desc">한 줄에 "영단어, 뜻" 또는 "영단어(탭)뜻" 형식으로 입력하세요. 엑셀·구글 시트에서 복사한 두 열을 그대로 붙여넣을 수 있습니다.</p>
+      <textarea id="bulk-input" class="bulk-input" rows="5" placeholder="apple, 사과&#10;banana, 바나나"></textarea>
+      <button id="bulk-add-btn" type="button" class="btn btn-secondary">일괄 추가</button>
+      <p id="bulk-result" class="bulk-result" role="status" hidden></p>
+    </section>
+
+    <section class="backup-section" aria-labelledby="backup-heading">
+      <h2 id="backup-heading" class="section-heading">백업</h2>
+      <div class="backup-actions">
+        <button id="export-btn" type="button" class="btn btn-secondary">내보내기</button>
+        <button id="import-btn" type="button" class="btn btn-secondary">가져오기</button>
+        <input id="import-file-input" type="file" accept="application/json" hidden>
+      </div>
+    </section>
+
+    <p id="word-count-label" class="word-count-label"></p>
+    <ul id="word-list" class="word-list"></ul>
+
+    <button id="reset-memorized-btn" type="button" class="btn btn-secondary reset-memorized-btn">완료 초기화</button>
+  </main>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

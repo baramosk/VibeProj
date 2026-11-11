@@ -1,0 +1,24 @@
+[project]
+name = "ledger-backend"
+version = "0.1.0"
+description = "가계부 앱 백엔드 (FastAPI)"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+extend-exclude = [".venv", "migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+
+# FastAPI는 Query(...)를 기본값으로 쓰는 것이 표준 관용구입니다.
+[tool.ruff.lint.per-file-ignores]
+"app/api/**" = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    # starlette.testclient가 httpx2 대신 httpx 사용을 알리는 경고. 사용자 지정 스택(httpx)을 유지하므로 무시합니다.
+    "ignore::starlette.exceptions.StarletteDeprecationWarning",
+]
