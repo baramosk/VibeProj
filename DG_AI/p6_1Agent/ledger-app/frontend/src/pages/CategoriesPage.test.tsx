@@ -15,6 +15,15 @@ describe('카테고리 관리 화면', () => {
     expect(screen.getByRole('region', { name: /수입 카테고리/ })).toBeInTheDocument();
   });
 
+  it('FR-09 삭제 확인 창에 옮겨질 거래 수를 보여준다 (Q-C)', async () => {
+    renderApp('/categories');
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: '식비 카테고리 삭제' }));
+
+    expect(await screen.findByText(/거래 12건은/)).toBeInTheDocument();
+  });
+
   it('FR-07 이름이 비어 있으면 저장하지 않고 오류를 보여준다', async () => {
     let created = false;
     server.use(

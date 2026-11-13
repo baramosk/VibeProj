@@ -7,6 +7,7 @@ from app.api.deps import (
     CsrfUserId,
     SessionDep,
     SettingsDep,
+    rate_limit,
     require_json_body,
 )
 from app.schemas.auth import (
@@ -24,7 +25,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
     "/signup",
     status_code=201,
     response_model=AuthResponse,
-    dependencies=[Depends(require_json_body)],
+    dependencies=[Depends(require_json_body), Depends(rate_limit("auth"))],
 )
 def signup(
     body: SignupRequest,
@@ -38,7 +39,11 @@ def signup(
     return AuthResponse(user=UserOut.model_validate(issued.user), csrf_token=issued.csrf_token)
 
 
-@router.post("/login", response_model=AuthResponse, dependencies=[Depends(require_json_body)])
+@router.post(
+    "/login",
+    response_model=AuthResponse,
+    dependencies=[Depends(require_json_body), Depends(rate_limit("auth"))],
+)
 def login(
     body: LoginRequest,
     response: Response,

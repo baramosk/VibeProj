@@ -4,8 +4,8 @@
 - CSRF (NFR-05): 상태 변경 요청은 X-CSRF-Token 헤더가 세션의 CSRF 토큰과 같아야 합니다 (없거나 다르면 403).
 """
 
-from collections.abc import Iterator
-from typing import Annotated
+from collections.abc import Callable, Iterator
+from typing import Annotated, Literal
 
 from fastapi import Depends, Request, Response
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ from app.api.cookies import set_session_cookie
 from app.constants import CSRF_HEADER_NAME
 from app.core.clock import Clock
 from app.core.config import Settings
-from app.core.errors import ForbiddenError, ValidationFailed
+from app.core.errors import ForbiddenError, RateLimitedError, ValidationFailed
 from app.core.security import tokens_match
 from app.lib.dates import parse_year_month
 from app.services.auth_service import AuthService, SessionContext
@@ -90,6 +90,37 @@ def get_csrf_user_id(session: CsrfSessionDep) -> int:
 
 
 CsrfUserId = Annotated[int, Depends(get_csrf_user_id)]
+
+
+RATE_LIMIT_MESSAGE = "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
+
+
+def rate_limit(bucket: Literal["auth", "write"]) -> Callable[[Request], None]:
+    """NFR-07 (Q-E): 버킷별 IP 단위 속도 제한을 거는 의존성을 만듭니다.
+
+    auth는 로그인과 가입, write는 거래 추가, 수정, 삭제에 씁니다.
+    설정 rate_limit_enabled가 false면 통과합니다.
+    """
+
+    def _check(request: Request) -> None:
+        settings: Settings = request.app.state.settings
+        if not settings.rate_limit_enabled:
+            return
+        limit = (
+            settings.rate_limit_auth_per_window
+            if bucket == "auth"
+            else settings.rate_limit_write_per_window
+        )
+        client = request.client.host if request.client else "unknown"
+        decision = request.app.state.rate_limiter.hit(
+            f"{bucket}:{client}", limit, settings.rate_limit_window_seconds
+        )
+        if not decision.allowed:
+            raise RateLimitedError(
+                RATE_LIMIT_MESSAGE, {"retry_after_seconds": decision.retry_after_seconds}
+            )
+
+    return _check
 
 
 def require_json_body(request: Request) -> None:

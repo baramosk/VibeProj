@@ -18,7 +18,7 @@
   ```json
   { "error": { "code": "VALIDATION_ERROR", "message": "사용자에게 보여줄 문장", "details": {} } }
   ```
-  주요 `code`: `VALIDATION_ERROR`(400), `UNAUTHORIZED`(401), `FORBIDDEN`(403), `NOT_FOUND`(404), `CONFLICT`(409), `ACCOUNT_LOCKED`(423), `INTERNAL_ERROR`(500)
+  주요 `code`: `VALIDATION_ERROR`(400), `UNAUTHORIZED`(401), `FORBIDDEN`(403), `NOT_FOUND`(404), `CONFLICT`(409), `ACCOUNT_LOCKED`(423), `RATE_LIMITED`(429), `INTERNAL_ERROR`(500)
 - 소유 격리: 모든 리소스는 로그인한 사용자 소유만 조회, 수정, 삭제할 수 있습니다. 다른 사용자의 리소스는 `404`로 응답합니다.
 
 ## 1. 인증 (FR-01~04)
@@ -42,7 +42,7 @@
 | PATCH | `/api/categories/{id}` | 이름, 색상 수정 | `{ name?, color? }` | `200` `Category` |
 | DELETE | `/api/categories/{id}` | 삭제 (거래 이동 포함) | `?replacement_id=` 필수 | `204`. 같은 유형이 아니면 `400` |
 
-`Category`: `{ id, name, type, color, is_default, created_at }`
+`Category`: `{ id, name, type, color, is_default, created_at, transaction_count }`. `transaction_count`는 목록과 수정 응답에서 채워지며, 추가 응답에서는 `0`입니다 (Q-C).
 
 기본 카테고리는 가입 시 자동 생성합니다 (FR-06). 예: 수입 (급여, 기타 수입), 지출 (식비, 교통, 주거, 쇼핑, 기타).
 
@@ -107,6 +107,7 @@
 - 입력 검증 실패는 `400` (`details`에 필드별 메시지)
 - 세션 없음은 `401`, CSRF 실패는 `403`, 자원 없음 또는 타인 자원은 `404`
 - 중복 (이메일, 카테고리 이름, 월별 예산)은 `409`
+- 속도 제한 초과는 `429` (`RATE_LIMITED`)이며, `Retry-After` 헤더와 `details.retry_after_seconds`로 대기 시간을 알립니다 (NFR-07)
 
 ## 구현 반영 변경 (2026-11-06)
 
@@ -125,6 +126,13 @@
 11. 시각은 UTC ISO 8601 (`...Z`)로 응답합니다.
 12. `/docs`(Swagger)는 기본적으로 비활성화되어 있습니다 (`LEDGER_DOCS_ENABLED`).
 
-### 아직 계약에 없는 기능 (결정 필요)
-- FR-08 카테고리 유형 변경: 구현 안 됨 (PATCH 본문에 `type` 없음)
-- FR-09 삭제 전 거래 수 표시: 구현 안 됨 (건수 API 없음)
+## 구현 반영 변경 (2026-11-13, 열린 질문 결정 반영)
+
+13. `Category`에 `transaction_count`를 추가했습니다. 삭제 확인 창에서 옮겨질 거래 수로 씁니다 (Q-C).
+14. 속도 제한 (NFR-07, Q-E): IP 단위, 고정 시간 창 (기본 60초). `POST /api/auth/login`, `POST /api/auth/signup`은 창당 10회, `POST`, `PATCH`, `DELETE /api/transactions`는 창당 60회를 넘으면 `429`입니다. 읽기 API는 제한하지 않습니다. 설정은 `LEDGER_RATE_LIMIT_*`입니다.
+15. 만료 세션 정리 (NFR-03, Q-F): API 변경은 없습니다. 앱 시작 시와 `LEDGER_SESSION_CLEANUP_INTERVAL_SECONDS` 주기 (기본 24시간)로 만료 세션을 삭제합니다.
+16. `FR-08` 카테고리 유형 변경은 MVP에서 제외합니다 (Q-B). 유형은 생성 후 고정입니다.
+
+### 결정으로 닫힌 항목
+- FR-08 카테고리 유형 변경: 제외 (Q-B)
+- FR-09 삭제 전 거래 수 표시: `transaction_count`로 해결 (Q-C)

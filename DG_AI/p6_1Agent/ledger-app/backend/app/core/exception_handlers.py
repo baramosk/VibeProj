@@ -15,7 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.errors import AppError
+from app.core.errors import AppError, RateLimitedError
 
 logger = logging.getLogger("ledger.api")
 
@@ -89,9 +89,13 @@ def _log_unhandled(request: Request, exc: Exception) -> None:
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError) -> JSONResponse:
+        headers: dict[str, str] | None = None
+        if isinstance(exc, RateLimitedError):
+            headers = {"Retry-After": str(exc.details.get("retry_after_seconds", 1))}
         return JSONResponse(
             status_code=exc.status_code,
             content=_error_body(exc.code, exc.message, exc.details),
+            headers=headers,
         )
 
     @app.exception_handler(RequestValidationError)

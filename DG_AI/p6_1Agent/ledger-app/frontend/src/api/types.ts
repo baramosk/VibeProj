@@ -12,6 +12,7 @@ export type ErrorCode =
   | 'NOT_FOUND'
   | 'CONFLICT'
   | 'ACCOUNT_LOCKED'
+  | 'RATE_LIMITED'
   | 'INTERNAL_ERROR';
 
 export interface User {
@@ -33,6 +34,8 @@ export interface Category {
   color: string;
   is_default: boolean;
   created_at: string;
+  /** 이 카테고리에 속한 거래 수 (Q-C). 삭제 확인 창에 씁니다. */
+  transaction_count: number;
 }
 
 export interface Transaction {

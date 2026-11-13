@@ -1,9 +1,9 @@
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
-from app.api.deps import CsrfUserId, CurrentUserId, TransactionServiceDep
+from app.api.deps import CsrfUserId, CurrentUserId, TransactionServiceDep, rate_limit
 from app.constants import PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX
 from app.repositories.transaction_repository import TransactionFilter
 from app.schemas.transaction import (
@@ -52,7 +52,12 @@ def list_transactions(
     )
 
 
-@router.post("", status_code=201, response_model=TransactionMutationOut)
+@router.post(
+    "",
+    status_code=201,
+    response_model=TransactionMutationOut,
+    dependencies=[Depends(rate_limit("write"))],
+)
 def create_transaction(
     body: TransactionCreate,
     user_id: CsrfUserId,
@@ -66,7 +71,11 @@ def create_transaction(
     )
 
 
-@router.patch("/{transaction_id}", response_model=TransactionMutationOut)
+@router.patch(
+    "/{transaction_id}",
+    response_model=TransactionMutationOut,
+    dependencies=[Depends(rate_limit("write"))],
+)
 def update_transaction(
     transaction_id: int,
     body: TransactionUpdate,
@@ -81,7 +90,11 @@ def update_transaction(
     )
 
 
-@router.delete("/{transaction_id}", response_model=TransactionDeletedOut)
+@router.delete(
+    "/{transaction_id}",
+    response_model=TransactionDeletedOut,
+    dependencies=[Depends(rate_limit("write"))],
+)
 def delete_transaction(
     transaction_id: int,
     user_id: CsrfUserId,

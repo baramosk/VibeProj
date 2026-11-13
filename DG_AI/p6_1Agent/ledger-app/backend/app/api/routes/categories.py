@@ -14,7 +14,11 @@ def list_categories(
     service: CategoryServiceDep,
     type_: Literal["INCOME", "EXPENSE"] | None = Query(default=None, alias="type"),
 ) -> list[CategoryOut]:
-    return [CategoryOut.model_validate(c) for c in service.list_categories(user_id, type_)]
+    counts = service.transaction_counts(user_id)
+    return [
+        CategoryOut.model_validate(c).model_copy(update={"transaction_count": counts.get(c.id, 0)})
+        for c in service.list_categories(user_id, type_)
+    ]
 
 
 @router.post("", status_code=201, response_model=CategoryOut)
@@ -31,7 +35,9 @@ def update_category(
     service: CategoryServiceDep,
 ) -> CategoryOut:
     """FR-08: 이름과 색상만 바꿉니다. 유형 변경은 계약에 없어 지원하지 않습니다."""
-    return CategoryOut.model_validate(service.update(user_id, category_id, body))
+    category = service.update(user_id, category_id, body)
+    count = service.transaction_count(user_id, category.id)
+    return CategoryOut.model_validate(category).model_copy(update={"transaction_count": count})
 
 
 @router.delete("/{category_id}", status_code=204, response_class=Response)

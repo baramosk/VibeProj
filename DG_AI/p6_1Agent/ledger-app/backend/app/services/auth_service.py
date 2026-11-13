@@ -140,6 +140,16 @@ class AuthService:
         self._sessions.delete(token_hash)
         self._db.commit()
 
+    def purge_expired_sessions(self) -> int:
+        """NFR-03 (Q-F): 만료 세션을 정리하고 지운 개수를 돌려줍니다. 앱 시작 시와 주기적으로 호출합니다."""
+        try:
+            removed = self._sessions.delete_expired(self._clock.now())
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            raise
+        return removed
+
     def delete_account(self, user_id: int, password: str) -> None:
         """FR-04, 흐름 5: 비밀번호 확인 후 사용자 데이터 전부를 하나의 트랜잭션으로 삭제합니다."""
         user = self.get_user(user_id)

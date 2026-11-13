@@ -16,9 +16,33 @@ export const USER: User = {
 };
 
 export const CATEGORIES: Category[] = [
-  { id: 1, name: '식비', type: 'EXPENSE', color: '#f59e0b', is_default: true, created_at: '2026-11-01T09:00:00+09:00' },
-  { id: 2, name: '교통', type: 'EXPENSE', color: '#3b82f6', is_default: true, created_at: '2026-11-01T09:00:00+09:00' },
-  { id: 3, name: '급여', type: 'INCOME', color: '#22c55e', is_default: true, created_at: '2026-11-01T09:00:00+09:00' },
+  {
+    id: 1,
+    name: '식비',
+    type: 'EXPENSE',
+    color: '#f59e0b',
+    is_default: true,
+    created_at: '2026-11-01T09:00:00+09:00',
+    transaction_count: 12,
+  },
+  {
+    id: 2,
+    name: '교통',
+    type: 'EXPENSE',
+    color: '#3b82f6',
+    is_default: true,
+    created_at: '2026-11-01T09:00:00+09:00',
+    transaction_count: 0,
+  },
+  {
+    id: 3,
+    name: '급여',
+    type: 'INCOME',
+    color: '#22c55e',
+    is_default: true,
+    created_at: '2026-11-01T09:00:00+09:00',
+    transaction_count: 1,
+  },
 ];
 
 export const MONTHLY_REPORT: MonthlyReport = {

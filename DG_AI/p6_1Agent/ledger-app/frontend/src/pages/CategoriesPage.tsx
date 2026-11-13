@@ -363,7 +363,7 @@ function CategoryDeleteDialog({
     <Modal
       open
       title="카테고리를 삭제할까요?"
-      description={`"${category.name}" 카테고리의 거래는 아래에서 고른 카테고리로 옮겨지고, 이 카테고리의 예산은 삭제됩니다.`}
+      description={`"${category.name}" 카테고리의 거래 ${category.transaction_count}건은 아래에서 고른 카테고리로 옮겨지고, 이 카테고리의 예산은 삭제됩니다.`}
       onClose={onClose}
     >
       {candidates.length === 0 ? (

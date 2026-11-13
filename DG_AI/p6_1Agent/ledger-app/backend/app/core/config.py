@@ -26,6 +26,17 @@ class Settings(BaseSettings):
     login_failure_window_minutes: int = Field(default=10, ge=1)
     login_lock_minutes: int = Field(default=15, ge=1)
 
+    # NFR-03 (Q-F): 만료 세션 정리 주기 (초). 앱 시작 시에도 한 번 정리합니다.
+    session_cleanup_interval_seconds: int = Field(default=86_400, ge=60)
+
+    # NFR-07 (Q-E): 요청 속도 제한. 메모리 기반, 고정 시간 창. 클라이언트 IP 단위.
+    rate_limit_enabled: bool = True
+    rate_limit_window_seconds: int = Field(default=60, ge=1)
+    # 로그인과 가입 (IP당 창마다)
+    rate_limit_auth_per_window: int = Field(default=10, ge=1)
+    # 거래 쓰기 (추가, 수정, 삭제, IP당 창마다)
+    rate_limit_write_per_window: int = Field(default=60, ge=1)
+
     # FR-20, FR-21: 예산 임계치 (Q-09), 설정으로 단계 추가 가능
     budget_alert_thresholds: list[int] = Field(default=[80, 100])
 
