@@ -52,6 +52,13 @@ class CategoryService:
     def list_categories(self, user_id: int, category_type: str | None = None) -> list[Category]:
         return self._categories.list_by_user(user_id, category_type)
 
+    def transaction_counts(self, user_id: int) -> dict[int, int]:
+        """Q-C: 카테고리 ID별 거래 수. 삭제 확인 창에 보여줍니다."""
+        return self._transactions.count_by_category(user_id)
+
+    def transaction_count(self, user_id: int, category_id: int) -> int:
+        return self._transactions.count_for_category(user_id, category_id)
+
     def create(self, user_id: int, data: CategoryCreate) -> Category:
         if self._categories.find_by_name(user_id, data.type, data.name) is not None:
             raise ConflictError(NAME_TAKEN_MESSAGE, {"name": "이미 사용 중인 이름입니다."})

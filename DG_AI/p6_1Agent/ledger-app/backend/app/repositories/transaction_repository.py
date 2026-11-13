@@ -123,6 +123,25 @@ class TransactionRepository:
     def delete_all_for_user(self, user_id: int) -> None:
         self._db.execute(delete(Transaction).where(Transaction.user_id == user_id))
 
+    def count_by_category(self, user_id: int) -> dict[int, int]:
+        """Q-C: 카테고리별 거래 수. 거래가 없는 카테고리는 결과에 없습니다."""
+        rows = self._db.execute(
+            select(Transaction.category_id, func.count())
+            .where(Transaction.user_id == user_id)
+            .group_by(Transaction.category_id)
+        ).all()
+        return {int(row[0]): int(row[1]) for row in rows}
+
+    def count_for_category(self, user_id: int, category_id: int) -> int:
+        return int(
+            self._db.scalar(
+                select(func.count())
+                .select_from(Transaction)
+                .where(Transaction.user_id == user_id, Transaction.category_id == category_id)
+            )
+            or 0
+        )
+
     @staticmethod
     def _conditions(user_id: int, flt: TransactionFilter) -> list:
         conditions = [Transaction.user_id == user_id]

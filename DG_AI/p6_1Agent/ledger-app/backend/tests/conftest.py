@@ -57,6 +57,9 @@ def settings(tmp_path) -> Settings:
         cors_origins=["http://localhost:5173"],
         hsts_enabled=False,
         docs_enabled=False,
+        # 속도 제한은 전용 테스트에서만 켭니다 (NFR-07). 일반 테스트는 많은 요청을 보냅니다.
+        rate_limit_enabled=False,
+        session_cleanup_interval_seconds=86_400,
     )
 
 

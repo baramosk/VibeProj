@@ -35,3 +35,5 @@ class CategoryOut(BaseModel):
     color: str
     is_default: bool
     created_at: UtcDateTime
+    # Q-C: 삭제 전 확인 창에 보여줄 거래 수. 목록, 수정 응답에서 채웁니다.
+    transaction_count: int = 0

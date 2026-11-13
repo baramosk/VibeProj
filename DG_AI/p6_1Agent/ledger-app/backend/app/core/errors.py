@@ -46,3 +46,10 @@ class ConflictError(AppError):
 class AccountLockedError(AppError):
     status_code = 423
     code = "ACCOUNT_LOCKED"
+
+
+class RateLimitedError(AppError):
+    """NFR-07: 요청이 너무 많습니다. details.retry_after_seconds와 Retry-After 헤더로 대기 시간을 알립니다."""
+
+    status_code = 429
+    code = "RATE_LIMITED"
